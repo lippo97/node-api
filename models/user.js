@@ -1,9 +1,10 @@
 // Require mongoose and mongoose.Schema
 var mongoose = require('mongoose');
-var bcrypt = require('bcrypt-nodejs');
+var bcrypt   = require('bcryptjs');
+var jwt      = require('jsonwebtoken');
 
 // Defining the user schema
-var UserSchema = new mongoose.Schema({
+var userSchema = new mongoose.Schema({
     username: {
         type: String,
         unique: true,
@@ -13,28 +14,47 @@ var UserSchema = new mongoose.Schema({
         type: String,
         required: true
     },
-    admin: Boolean
 });
 
 // Before saving the user
-UserSchema.pre('save', function(callback) {
+userSchema.pre('save', function(callback) {
     var user = this;
 
     // Break out if the password hasn't changed
     if (!user.isModified('password')) return callback();
 
     // Password changed so we need to hash it
-    bcrypt.genSalt(5, function(err, salt) {
-        if (err) return callback(err);
-
-        bcrypt.hash(user.password, salt, null, function(err, hash) {
-            if (err) return callback(err);
-            user.password = hash;
-            callback();
-        });
-    });
+    var salt = bcrypt.genSaltSync(10);
+    var hash = bcrypt.hashSync(user.password, salt);
+    user.password = hash;
+    callback();
 });
+
+userSchema.methods = {
+    isValidPassword: function(password) {
+        return bcrypt.compareSync(password, this.password);
+    },
+
+    getToken: function() {
+        var token = jwt.sign({
+            id: this._id
+        }, process.env.SECRET_TOKEN, { expiresIn: '1d' });
+        return token;
+    }
+}
+
+userSchema.statics = {
+    isValidToken: function(token) {
+        // invalid token - synchronous
+        try {
+            var decoded = jwt.verify(token, process.env.SECRET_TOKEN);
+            console.log(decoded);
+        } catch(err) {
+            console.log(err);
+        }
+    }
+}
 
 
 // Creating the model and exporting it
-module.exports = mongoose.model('User', UserSchema);
+module.exports = mongoose.model('User', userSchema);

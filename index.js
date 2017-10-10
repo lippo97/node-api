@@ -4,13 +4,13 @@ var bodyParser = require('body-parser');
 var morgan     = require('morgan');
 var mongoose   = require('mongoose');
 var jwt        = require('jsonwebtoken');
+var dotenv     = require('dotenv');
 
 var config     = require('./config');
 var routes     = require('./routes');
-// var User       = require('./models/user');
 
 mongoose.connect(config.database);      // Setting mongoose
-app.set('secretKey', config.segretKey); // Setting jwt secretKey
+dotenv.config();                        // Loading enviroment variables
 
 // Using bodyParser to get info from POST and URL params
 app.use(bodyParser.urlencoded({ extended: false }));
