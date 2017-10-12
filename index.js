@@ -1,13 +1,14 @@
-var express    = require('express');
-var app        = express();
-var bodyParser = require('body-parser');
-var morgan     = require('morgan');
-var mongoose   = require('mongoose');
-var jwt        = require('jsonwebtoken');
-var dotenv     = require('dotenv');
+var express      = require('express');
+var app          = express();
+var bodyParser   = require('body-parser');
+var cookieParser = require('cookie-parser');
+var morgan       = require('morgan');
+var mongoose     = require('mongoose');
+var jwt          = require('jsonwebtoken');
+var dotenv       = require('dotenv');
 
-var config     = require('./config');
-var routes     = require('./routes');
+var config       = require('./config');
+var routes       = require('./routes');
 
 mongoose.connect(config.database);      // Setting mongoose
 dotenv.config();                        // Loading enviroment variables
@@ -15,6 +16,7 @@ dotenv.config();                        // Loading enviroment variables
 // Using bodyParser to get info from POST and URL params
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
+app.use(cookieParser());
 
 // Using morgan to log requests
 app.use(morgan('dev'));

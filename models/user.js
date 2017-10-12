@@ -1,7 +1,11 @@
 // Require mongoose and mongoose.Schema
-var mongoose = require('mongoose');
-var bcrypt   = require('bcryptjs');
-var jwt      = require('jsonwebtoken');
+var mongoose    = require('mongoose');
+var bcrypt      = require('bcryptjs');
+var crypto      = require('crypto');
+var base64url   = require('base64url');
+
+var tokenSchema = require('./token');
+
 
 // Defining the user schema
 var userSchema = new mongoose.Schema({
@@ -14,6 +18,12 @@ var userSchema = new mongoose.Schema({
         type: String,
         required: true
     },
+    createDate: {
+        type: Date,
+        default: Date.now
+    },
+    access_tokens:   [tokenSchema],
+    refresh_tokens:  [tokenSchema]
 });
 
 // Before saving the user
@@ -35,26 +45,30 @@ userSchema.methods = {
         return bcrypt.compareSync(password, this.password);
     },
 
-    getToken: function() {
-        var token = jwt.sign({
-            id: this._id
-        }, process.env.SECRET_TOKEN, { expiresIn: '1d' });
-        return token;
+    getTokens: function() {
+        var access_token  = randomStringAsBase64Url(20);
+        var refresh_token = randomStringAsBase64Url(20);
+
+        this.access_tokens.push(new Token(access_token));
+        this.refresh_tokens.push(new Token(refresh_token));
+        console.log(this.access_tokens);
+
+        return {
+            access_token:   access_token,
+            refresh_token:  refresh_token 
+        };
     }
 }
 
 userSchema.statics = {
     isValidToken: function(token) {
-        // invalid token - synchronous
-        try {
-            var decoded = jwt.verify(token, process.env.SECRET_TOKEN);
-            console.log(decoded);
-        } catch(err) {
-            console.log(err);
-        }
+        return true;
     }
 }
 
+function randomStringAsBase64Url(size) {
+    return base64url(crypto.randomBytes(size));
+}
 
 // Creating the model and exporting it
 module.exports = mongoose.model('User', userSchema);

@@ -44,13 +44,12 @@ var authController = {
             }
             // At this point the user has provided the right password
             // and it has been authenticated:
-            // I'll create the token and merge it to the response
-            var token = user.getToken();
-            // TODO: response.setHeader('Set-Cookie', 'foo=bar; HttpOnly');
+            var tokens = user.getTokens();
+            response.set('Set-Cookie', 'refresh_token=' + tokens.refresh_token + '; HttpOnly');
             response.json({
                 status: 200,
                 message: "You have been authenticated.",
-                token: token
+                access_token: tokens.access_token
             });
         });
     },
@@ -100,6 +99,7 @@ var authController = {
                 });
                 return;
             }
+            console.log(request.cookies);
             response.json({
                 users: users
             });
